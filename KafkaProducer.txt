@@ -1,0 +1,64 @@
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
+import java.util.Properties;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+
+public class KafkaFile 
+{
+	private static final String topicName = "Ntopic";
+	KafkaProducer<String, String> producer;
+	public KafkaFile(String topic) 
+	{
+		Properties props = new Properties();
+		props.put("bootstrap.servers", "localhost:9092");
+		props.put("client.id", "KafkaProducer");
+		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+		props.put("value.serializer",  "org.apache.kafka.common.serialization.StringSerializer");
+		producer = new KafkaProducer<String, String>(props);
+	}
+	public void sendMessage(String key, String value) 
+	{
+		try 
+		{
+			producer.send(new ProducerRecord<String, String>(topicName, key, value)).get();
+			System.out.println("Sent message: (" + key + ", " + value + ")");			
+		} catch (Exception e) 
+		  {
+			e.printStackTrace();
+		  }
+	}
+	public static void main(String[] args) 
+	{
+		KafkaFile prod = new KafkaFile(topicName);
+		int count = 0;
+		FileInputStream fis;
+		BufferedReader br = null;
+		try 
+		{
+			fis = new FileInputStream("C:/Naga/test.txt");
+			br  = new BufferedReader( new InputStreamReader(fis));
+			String line = br.readLine();
+			while (line != null) 
+			{
+				count = count + 1;
+				prod.sendMessage(count+"", line);
+				line = br.readLine();
+			} fis.close();			
+		} catch (Exception e) 
+		  {
+			e.printStackTrace();
+		  } finally 
+		    {
+			  try 
+			  {
+				br.close();  
+			  } catch (Exception e) 
+			    {
+				  e.printStackTrace(); 
+			    }
+		    }
+	}
+}
